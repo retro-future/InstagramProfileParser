@@ -1,0 +1,288 @@
+.navbar_custom {
+    height: 60px;
+    padding: 0;
+    background-color: white;
+}
+
+body {
+    background-color: #fafafa;
+    color: #262626;
+}
+
+
+.container-custom {
+    max-width: 975px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+
+}
+
+header {
+    background-color: white;
+    border-bottom: 1px solid lightgray;
+
+}
+
+.logo {
+    height: 29px;
+    width: 103px;
+    margin-top: 6px;
+}
+
+.logo-button {
+    align-items: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    margin-left: 5px;
+    margin-bottom: 3px;
+
+}
+
+.arrow {
+    border: solid black;
+    border-width: 0 1px 1px 0;
+    padding: 3px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+.down {
+    transform: rotate(45deg);
+}
+
+#search_field {
+    background-color: #f5f5f5;
+    border-radius: 10px;
+    border: none;
+    padding: 5px 20px;
+
+}
+
+.search_field {
+    max-width: 268px;
+}
+
+
+.navbar_icons {
+    max-width: 278px;
+}
+
+.navbar-icon_button {
+    margin-left: 22px;
+}
+
+.navbar-icon_button:first-child {
+    margin-left: 0;
+}
+
+.profile-img-mini {
+    border-radius: 50%;
+    height: 24px;
+    width: 24px;
+}
+
+
+.profile_info {
+    padding-top: 90px;
+    display: flex;
+    margin-bottom: 44px;
+}
+
+.profile_bio {
+    margin-bottom: 25px;
+}
+
+.profile_info-right {
+    width: 31%;
+    margin-right: 30px;
+}
+
+.profile_info__img {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.profile_info__img-button {
+    border: none;
+    background-color: #fafafa;
+    padding: 0;
+
+}
+
+.profile_info__avatar {
+    height: 150px;
+    width: 150px;
+    border-radius: 50%;
+}
+
+.profile_settings {
+    display: flex;
+    padding-top: 7px;
+    align-items: center;
+}
+
+.profile_nick {
+    font-weight: 300;
+    font-size: 28px;
+    line-height: 28px;
+    margin: 0;
+}
+
+.edit_profile {
+    margin-left: 20px;
+}
+
+.edit_profile__button {
+    text-align: center;
+    border: 1px solid rgb(219, 219, 219);
+    background-color: transparent;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 5px 9px;
+    line-height: 1.2;
+}
+
+.profile_settings__button {
+    border: none;
+    background-color: transparent;
+    margin-left: 5px;
+}
+
+.followers {
+    display: flex;
+}
+
+.follower-number {
+    font-weight: 600;
+    color: rgb(38, 38, 38);
+}
+
+.follower_section {
+    margin-right: 40px;
+}
+
+.follower_section:last-child {
+    margin-right: 0;
+}
+
+.post_related {
+    border-top: 1px solid rgb(219, 219, 219);
+    display: flex;
+    justify-content: center;
+    align-content: center;
+}
+
+.post_related__block {
+    margin-right: 60px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+}
+
+.post_related__block:last-child {
+    margin-right: 0;
+}
+
+.post_related__link {
+    text-decoration: none;
+    color: rgb(142, 142, 142);
+    display: flex;
+    align-items: center;
+}
+
+.post_related__text {
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 6px;
+    letter-spacing: 1px;
+}
+
+.post_related__link:hover {
+    color: rgb(142, 142, 142);
+}
+
+.posts_wrapper {
+    display: flex;
+    flex-wrap: wrap;
+
+}
+
+.user_posts__wrap {
+    width: 31.3333%;
+    margin-right: 28px;
+    position: relative;
+    overflow: hidden;
+    height: 293px;
+    background-color: navajowhite;
+    margin-bottom: 30px;
+    cursor: pointer;
+}
+
+.user_posts__wrap:nth-child(3n) {
+    margin-right: 0;
+}
+
+.user_posts__meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background-color: rgba(24, 24, 24, 0.9);
+    top: 0;
+    left: 0;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity, 0.1s linear;
+}
+
+.user_posts__meta:hover{
+    opacity: 70%;
+}
+
+.user_posts__likes {
+    display: flex;
+    margin-right: 30px;
+}
+
+.user_posts__likes span {
+    color: white;
+    font-weight: 700;
+}
+
+.user_posts__comment {
+    display: flex;
+}
+
+.user_posts__comment span{
+    color: white;
+    font-weight: 700;
+}
+
+.user_posts__qlike {
+    background-repeat: no-repeat;
+    background-position: -340px -333px;
+    height: 19px;
+    width: 19px;
+    background-image: url("../img/icons.png");
+    margin-top: 2px;
+    margin-right: 7px;
+}
+
+.user_posts__qcomment {
+    background-repeat: no-repeat;
+    background-position: -382px -333px;
+    height: 19px;
+    width: 19px;
+    background-image: url("../img/icons.png");
+    margin-top: 2px;
+    margin-right: 7px;
+}
