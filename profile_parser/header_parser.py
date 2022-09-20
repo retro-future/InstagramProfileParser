@@ -1,12 +1,90 @@
 from bs4 import BeautifulSoup
-import requests
+from environs import Env
+from lxml import etree
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.wait import WebDriverWait
 
-from parser.tag_classes import AVATAR_CLASS
+env = Env()
+env.read_env()
 
-url = "https://www.instagram.com/shvhzxd/"
-response = requests.get(url)
-soup = BeautifulSoup(response.text,"lxml")
 
-def parse_header():
-    img = soup.find("img", _class=AVATAR_CLASS)
-    print(img['src'])
+class InstagramBot:
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self.driver = webdriver.Chrome()
+
+    def close_browser(self):
+        self.driver.close()
+
+    def login(self):
+        self.driver.get('https://www.instagram.com/accounts/login/')
+        try:
+            WebDriverWait(self.driver, 10).until(
+                ec.presence_of_element_located((By.XPATH, "//input[@name='username']")))
+        except TimeoutException:
+            print("login page error")
+        user_name_elem = self.driver.find_element(By.XPATH, "//input[@name='username']")
+        user_name_elem.clear()
+        user_name_elem.send_keys(self.username)
+        password_elem = self.driver.find_element(By.XPATH, "//input[@name='password']")
+        password_elem.clear()
+        password_elem.send_keys(self.password)
+        password_elem.send_keys(Keys.RETURN)
+        try:
+            WebDriverWait(self.driver, 10).until(
+                ec.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div/div[1]/div/div/div/div['
+                                                          '1]/div[1]/div[1]')))
+        except TimeoutException:
+            print("not authenticated")
+
+    def get_profile_page(self, profile_page_url: str):
+        self.driver.get(profile_page_url)
+        try:
+            WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.XPATH, '/html/body/div['
+                                                                                           '1]/div/div/div/div['
+                                                                                           '1]/div/div/div/div['
+                                                                                           '1]/div[2]/div['
+                                                                                           '2]/section/main/div/header')))
+        except TimeoutException:
+            print("I give up...")
+        return self.driver.page_source
+
+
+class HeaderParse:
+
+    def __init__(self, profile_page: str):
+        self.profile_page = profile_page
+        self.soup = BeautifulSoup(self.profile_page, "lxml")
+        self.dom = etree.HTML(str(self.soup))
+
+    def parse_avatar_url(self) -> str:
+        user_avatar = self.dom.xpath('/html/body/div[1]/div/div/div/div[1]/div/div/div/div[1]/div[2]/div['
+                                     '2]/section/main/div/header/div/div/span/img/@src')
+        user_avatar_1 = self.dom.xpath("/html/body/div[1]/div/div/div/div[1]/div/div/div/div[1]/div[2]/div["
+                                       "2]/section/main/div/header/div/div/div/button/img/@src")
+        return user_avatar[0] or user_avatar_1[0]
+
+    def get_basic_info(self):
+        user_avatar_url = self.parse_avatar_url()
+        user_name = self.soup.find(class_="_aacl _aacs _aact _aacx _aada")
+        user_info = self.soup.findAll("span", "_ac2a")
+        user_posts_count = user_info[0]
+        user_followers_count = user_info[1]
+        user_following_count = user_info[2]
+        return f"User Name: {user_name.text}\nAvatar Url: {user_avatar_url}\nPosts: {user_posts_count.text}\n" \
+               f"Followers: {user_followers_count.text}\nFollowing: {user_following_count.text}"
+
+
+if __name__ == "__main__":
+    UserIG = InstagramBot(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))  # Add Account and Password
+    UserIG.login()
+    user_page = UserIG.get_profile_page("https://www.instagram.com/jonibek3xx/")
+    UserIG.close_browser()
+    user_profile = HeaderParse(user_page)
+    print(user_profile.get_basic_info())
