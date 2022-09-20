@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from environs import Env
 from lxml import etree
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
@@ -10,6 +11,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 env = Env()
 env.read_env()
+
+
+class DomElementNotFound(BaseException):
+    pass
 
 
 class InstagramBot:
@@ -56,12 +61,14 @@ class InstagramBot:
         return self.driver.page_source
 
 
-class HeaderParse:
-
+class BaseParser:
     def __init__(self, profile_page: str):
         self.profile_page = profile_page
         self.soup = BeautifulSoup(self.profile_page, "lxml")
         self.dom = etree.HTML(str(self.soup))
+
+
+class HeaderParse(BaseParser):
 
     def parse_avatar_url(self) -> str:
         user_avatar = self.dom.xpath('/html/body/div[1]/div/div/div/div[1]/div/div/div/div[1]/div[2]/div['
@@ -81,10 +88,37 @@ class HeaderParse:
                f"Followers: {user_followers_count.text}\nFollowing: {user_following_count.text}"
 
 
+class PostsParse(BaseParser):
+
+    def _get_post_img_src(self, class_name: str) -> list:
+        img_src_list = list()
+        child_divs = self.soup.find("div", class_=class_name)
+        for img in child_divs.findAll("img"):
+            img_src_list.append(img["srcset"].split(",")[-1].split()[0])
+        return img_src_list
+
+    def get_user_posts(self):
+        post_row_block = self.dom.xpath("/html/body/div[1]/div/div/div/div[1]/div/div/div/div[1]/div[2]/div["
+                                        "2]/section/main/div/div[2]/article/div[1]/div/div[1]")
+        if post_row_block:
+            post_row_block = post_row_block[0]
+        else:
+            raise DomElementNotFound
+        block_class_name = post_row_block.attrib["class"]
+        src_list = self._get_post_img_src(block_class_name)
+        return src_list
+
+
+
 if __name__ == "__main__":
-    UserIG = InstagramBot(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))  # Add Account and Password
-    UserIG.login()
-    user_page = UserIG.get_profile_page("https://www.instagram.com/jonibek3xx/")
-    UserIG.close_browser()
-    user_profile = HeaderParse(user_page)
-    print(user_profile.get_basic_info())
+    # UserIG = InstagramBot(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))  # Add Account and Password
+    # UserIG.login()
+    # user_page = UserIG.get_profile_page("https://www.instagram.com/lostfrequencies/")
+    # UserIG.close_browser()
+    with open("index.html", "r", encoding="utf-8") as fp:
+        user_page = fp.read()
+    user_header = HeaderParse(user_page)
+    user_posts = PostsParse(user_page)
+    print(user_header.get_basic_info())
+    print(user_posts.get_user_posts())
+
