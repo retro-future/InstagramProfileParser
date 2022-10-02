@@ -2,19 +2,17 @@ from bs4 import BeautifulSoup
 from environs import Env
 from lxml import etree
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.common.exceptions import NoSuchElementException
+
+from profile_parser.custom_ec import document_height_is_not_equal
 
 env = Env()
 env.read_env()
-
-
-class DomElementNotFound(BaseException):
-    pass
 
 
 class InstagramBot:
@@ -23,6 +21,7 @@ class InstagramBot:
         self.username = username
         self.password = password
         self.driver = webdriver.Chrome()
+        self.driver.maximize_window()
 
     def close_browser(self):
         self.driver.close()
@@ -48,16 +47,46 @@ class InstagramBot:
         except TimeoutException:
             print("not authenticated")
 
+    @staticmethod
+    def get_img_src(element_list: list) -> list:
+        src_list = list()
+        for element in element_list:
+            src = element.get_attribute('src')
+            if src:
+                src_list.append(src)
+        return src_list
+
+    def parse_posts_links(self) -> list:
+        parent = self.driver.find_element(By.XPATH, "//div[contains(@style,'position: relative; display: flex; "
+                                                    "flex-direction: column; padding-bottom: 0px; padding-top: "
+                                                    "0px;')]")
+        img_src_list = list()
+
+        while True:
+            posts_row_block = parent.find_elements(By.XPATH, "//img[contains(@class, 'pytsy3co buh8m867 s8sjc6am "
+                                                             "ekq1a7f9 f14ij5to mfclru0v')]")
+            previous_height = self.driver.execute_script("return document.body.scrollHeight")
+            img_src_list.extend(self.get_img_src(posts_row_block))
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            try:
+                WebDriverWait(self.driver, 10).until(document_height_is_not_equal(previous_height))
+            except TimeoutException:
+                print("End of the profile page")
+                break
+        img_src_list = list(dict.fromkeys(img_src_list))
+        return img_src_list
+
     def get_profile_page(self, profile_page_url: str):
         self.driver.get(profile_page_url)
         try:
-            WebDriverWait(self.driver, 10).until(ec.presence_of_element_located((By.XPATH, '/html/body/div['
-                                                                                           '1]/div/div/div/div['
-                                                                                           '1]/div/div/div/div['
-                                                                                           '1]/div[2]/div['
-                                                                                           '2]/section/main/div/header')))
+            WebDriverWait(self.driver, 10).until(ec.all_of(
+                ec.presence_of_element_located((By.XPATH, "//div[contains(text(), 'followers')]")),
+                ec.presence_of_element_located((By.XPATH, "//div[contains(@style,'position: relative; display: flex; "
+                                                          "flex-direction: column; padding-bottom: 0px; padding-top: "
+                                                          "0px;')]"))
+            ))
         except TimeoutException:
-            print("I give up...")
+            print("cannot load profile page")
         return self.driver.page_source
 
 
@@ -103,22 +132,23 @@ class PostsParse(BaseParser):
         if post_row_block:
             post_row_block = post_row_block[0]
         else:
-            raise DomElementNotFound
+            raise NoSuchElementException
         block_class_name = post_row_block.attrib["class"]
         src_list = self._get_post_img_src(block_class_name)
         return src_list
 
 
-
 if __name__ == "__main__":
-    # UserIG = InstagramBot(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))  # Add Account and Password
-    # UserIG.login()
-    # user_page = UserIG.get_profile_page("https://www.instagram.com/lostfrequencies/")
-    # UserIG.close_browser()
-    with open("index.html", "r", encoding="utf-8") as fp:
-        user_page = fp.read()
-    user_header = HeaderParse(user_page)
-    user_posts = PostsParse(user_page)
-    print(user_header.get_basic_info())
-    print(user_posts.get_user_posts())
-
+    UserIG = InstagramBot(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))  # Add Account and Password
+    UserIG.login()
+    user_page = UserIG.get_profile_page("https://www.instagram.com/shvhzxd/")
+    src_list = UserIG.parse_posts_links()
+    print(src_list)
+    print(len(src_list))
+    UserIG.close_browser()
+    # with open("index.html", "r", encoding="utf-8") as fp:
+    #     user_page = fp.read()
+    # user_header = HeaderParse(user_page)
+    # user_posts = PostsParse(user_page)
+    # print(user_header.get_basic_info())
+    # print(user_posts.get_user_posts())
