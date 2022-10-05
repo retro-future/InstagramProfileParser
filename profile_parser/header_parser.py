@@ -1,3 +1,9 @@
+import json
+from datetime import timedelta
+from pprint import pprint
+
+import redis
+import requests
 from bs4 import BeautifulSoup
 from environs import Env
 from lxml import etree
@@ -15,40 +21,63 @@ env = Env()
 env.read_env()
 
 
-class InstagramBot:
+class InstagramAuth:
+    """I could've use Union for the driver argument but,
+     I ended up choosing chrome driver to make the type hints work  """
 
-    def __init__(self, username, password):
+    def __init__(self, username: str, password: str, driver: webdriver.Chrome):
         self.username = username
         self.password = password
-        self.driver = webdriver.Chrome()
-        self.driver.maximize_window()
+        self._driver = driver
+        self._driver.maximize_window()
+        self.redis_cache = redis.Redis()
 
     def close_browser(self):
-        self.driver.close()
+        self._driver.close()
+
+    def check_redis_cache(self):
+        cookies = self.redis_cache.get("cookies")
+        if cookies:
+            deserialized_cookies = json.loads(cookies)
+            return deserialized_cookies
+        return None
 
     def login(self):
-        self.driver.get('https://www.instagram.com/accounts/login/')
-        try:
-            WebDriverWait(self.driver, 10).until(
-                ec.presence_of_element_located((By.XPATH, "//input[@name='username']")))
-        except TimeoutException:
-            print("login page error")
-        user_name_elem = self.driver.find_element(By.XPATH, "//input[@name='username']")
+        cookies = self.check_redis_cache()
+        if cookies:
+            self._driver.cookies = cookies
+            return
+        self._driver.get('https://www.instagram.com/accounts/login/')
+        WebDriverWait(self._driver, 10).until(ec.presence_of_element_located((By.XPATH, "//input[@name='username']")))
+        user_name_elem = self._driver.find_element(By.XPATH, "//input[@name='username']")
         user_name_elem.clear()
         user_name_elem.send_keys(self.username)
-        password_elem = self.driver.find_element(By.XPATH, "//input[@name='password']")
+        password_elem = self._driver.find_element(By.XPATH, "//input[@name='password']")
         password_elem.clear()
         password_elem.send_keys(self.password)
         password_elem.send_keys(Keys.RETURN)
         try:
-            WebDriverWait(self.driver, 10).until(
-                ec.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div/div[1]/div/div/div/div['
-                                                          '1]/div[1]/div[1]')))
+            WebDriverWait(self._driver, 10).until(
+                ec.presence_of_element_located((By.XPATH, "//div[contains(text(), 'Profile') or contains(text(), "
+                                                          "'Messages')]")))
         except TimeoutException:
             print("not authenticated")
+        new_cookies = self._driver.get_cookies()
+        serialized_cookies = json.dumps(new_cookies)
+        self.redis_cache.set("cookies", serialized_cookies)
+        self.redis_cache.expire("cookies", timedelta(minutes=1440))
+
+    @property
+    def get_driver(self):
+        return self._driver
+
+
+class InstagramBot:
+    def __init__(self, driver: webdriver.Chrome):
+        self._driver = driver
 
     @staticmethod
-    def get_img_src(element_list: list) -> list:
+    def _get_img_src(element_list: list) -> list:
         src_list = list()
         for element in element_list:
             src = element.get_attribute('src')
@@ -57,19 +86,23 @@ class InstagramBot:
         return src_list
 
     def parse_posts_links(self) -> list:
-        parent = self.driver.find_element(By.XPATH, "//div[contains(@style,'position: relative; display: flex; "
+        """Have to convert 'img_src_list' into dict and vice versa
+            in order to preserve posts order
+        """
+        posts_row_block = self._driver.find_element(By.XPATH,
+                                                    "//div[contains(@style,'position: relative; display: flex; "
                                                     "flex-direction: column; padding-bottom: 0px; padding-top: "
                                                     "0px;')]")
         img_src_list = list()
 
         while True:
-            posts_row_block = parent.find_elements(By.XPATH, "//img[contains(@class, 'pytsy3co buh8m867 s8sjc6am "
-                                                             "ekq1a7f9 f14ij5to mfclru0v')]")
-            previous_height = self.driver.execute_script("return document.body.scrollHeight")
-            img_src_list.extend(self.get_img_src(posts_row_block))
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            img_tag = posts_row_block.find_elements(By.XPATH, "//img[contains(@alt, 'Photo by') or contains(@style, "
+                                                              "'object-fit: cover;')]")
+            previous_height = self._driver.execute_script("return document.body.scrollHeight")
+            img_src_list.extend(self._get_img_src(img_tag))
+            self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             try:
-                WebDriverWait(self.driver, 10).until(document_height_is_not_equal(previous_height))
+                WebDriverWait(self._driver, 10).until(document_height_is_not_equal(previous_height))
             except TimeoutException:
                 print("End of the profile page")
                 break
@@ -77,9 +110,9 @@ class InstagramBot:
         return img_src_list
 
     def get_profile_page(self, profile_page_url: str):
-        self.driver.get(profile_page_url)
+        self._driver.get(profile_page_url)
         try:
-            WebDriverWait(self.driver, 10).until(ec.all_of(
+            WebDriverWait(self._driver, 10).until(ec.all_of(
                 ec.presence_of_element_located((By.XPATH, "//div[contains(text(), 'followers')]")),
                 ec.presence_of_element_located((By.XPATH, "//div[contains(@style,'position: relative; display: flex; "
                                                           "flex-direction: column; padding-bottom: 0px; padding-top: "
@@ -87,7 +120,7 @@ class InstagramBot:
             ))
         except TimeoutException:
             print("cannot load profile page")
-        return self.driver.page_source
+        return self._driver.page_source
 
 
 class BaseParser:
@@ -100,11 +133,10 @@ class BaseParser:
 class HeaderParse(BaseParser):
 
     def parse_avatar_url(self) -> str:
-        user_avatar = self.dom.xpath('/html/body/div[1]/div/div/div/div[1]/div/div/div/div[1]/div[2]/div['
-                                     '2]/section/main/div/header/div/div/span/img/@src')
-        user_avatar_1 = self.dom.xpath("/html/body/div[1]/div/div/div/div[1]/div/div/div/div[1]/div[2]/div["
-                                       "2]/section/main/div/header/div/div/div/button/img/@src")
-        return user_avatar[0] or user_avatar_1[0]
+        user_avatar = self.dom.xpath("//img[contains(@alt, 'Change profile photo') or contains(@alt, 'profile "
+                                     "picture')]")
+        if user_avatar:
+            return user_avatar[0]
 
     def get_basic_info(self):
         user_avatar_url = self.parse_avatar_url()
@@ -139,12 +171,15 @@ class PostsParse(BaseParser):
 
 
 if __name__ == "__main__":
-    UserIG = InstagramBot(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))  # Add Account and Password
+    UserIG = InstagramAuth(env.str("IG_USERNAME"), env.str("IG_PASSWORD"), webdriver.Chrome())  # Add Account and Password
     UserIG.login()
-    user_page = UserIG.get_profile_page("https://www.instagram.com/shvhzxd/")
-    src_list = UserIG.parse_posts_links()
-    print(src_list)
-    print(len(src_list))
+    Insta_bot = InstagramBot(UserIG.get_driver)
+    user_page = Insta_bot.get_profile_page("https://www.instagram.com/suxrob_gm/")
+    user_header = HeaderParse(user_page)
+    # src_list = Insta_bot.parse_posts_links()
+    print(user_header.get_basic_info())
+    # print(src_list)
+    # print(len(src_list))
     UserIG.close_browser()
     # with open("index.html", "r", encoding="utf-8") as fp:
     #     user_page = fp.read()
