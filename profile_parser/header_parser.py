@@ -1,5 +1,7 @@
 import json
-from datetime import timedelta
+import os
+import pickle
+from datetime import timedelta, datetime
 from pprint import pprint
 
 import redis
@@ -35,17 +37,32 @@ class InstagramAuth:
     def close_browser(self):
         self._driver.close()
 
-    def check_redis_cache(self):
-        cookies = self.redis_cache.get("cookies")
-        if cookies:
-            deserialized_cookies = json.loads(cookies)
-            return deserialized_cookies
-        return None
+    def check_and_update_cookies(self):
+        """
+        Selenium webdriver is initialized with default url "data:".
+        add_cookie() requires the current url to be under the same domain pattern as the cookie otherwise
+        we get invalid domain exception.
+        "data:" will not match any cookie domain, so we have to open site before add any cookie
+        :return:
+        """
+        if not os.path.exists("cookies.pkl"):
+            return None
+        with open("cookies.pkl", "rb") as f:
+            cookies = pickle.load(f)
+            # there might be dicts without "expiry" key, so there's an additional check
+            min_expiry_time = min([cookie.get("expiry") for cookie in cookies if cookie.get("expiry")])
+            formatted_time = datetime.fromtimestamp(min_expiry_time)
+            if formatted_time < datetime.now():
+                return False
+            self._driver.get("https://www.instagram.com")
+            self._driver.delete_all_cookies()
+            for cookie in cookies:
+                self._driver.add_cookie(cookie_dict=cookie)
+        return True
 
     def login(self):
-        cookies = self.check_redis_cache()
-        if cookies:
-            self._driver.cookies = cookies
+        cookies_exists = self.check_and_update_cookies()
+        if cookies_exists:
             return
         self._driver.get('https://www.instagram.com/accounts/login/')
         WebDriverWait(self._driver, 10).until(ec.presence_of_element_located((By.XPATH, "//input[@name='username']")))
@@ -62,10 +79,8 @@ class InstagramAuth:
                                                           "'Messages')]")))
         except TimeoutException:
             print("not authenticated")
-        new_cookies = self._driver.get_cookies()
-        serialized_cookies = json.dumps(new_cookies)
-        self.redis_cache.set("cookies", serialized_cookies)
-        self.redis_cache.expire("cookies", timedelta(minutes=1440))
+
+        pickle.dump(self._driver.get_cookies(), open("cookies.pkl", "wb"))
 
     @property
     def get_driver(self):
@@ -94,7 +109,6 @@ class InstagramBot:
                                                     "flex-direction: column; padding-bottom: 0px; padding-top: "
                                                     "0px;')]")
         img_src_list = list()
-
         while True:
             img_tag = posts_row_block.find_elements(By.XPATH, "//img[contains(@alt, 'Photo by') or contains(@style, "
                                                               "'object-fit: cover;')]")
@@ -133,10 +147,9 @@ class BaseParser:
 class HeaderParse(BaseParser):
 
     def parse_avatar_url(self) -> str:
-        user_avatar = self.dom.xpath("//img[contains(@alt, 'Change profile photo') or contains(@alt, 'profile "
-                                     "picture')]")
-        if user_avatar:
-            return user_avatar[0]
+        user_avatar = self.dom.xpath("//header/div/div/span/img/@src")
+        user_avatar_1 = self.dom.xpath("//header/div/div/div/button/img/@src")
+        return user_avatar[0] or user_avatar_1[0]
 
     def get_basic_info(self):
         user_avatar_url = self.parse_avatar_url()
@@ -171,15 +184,16 @@ class PostsParse(BaseParser):
 
 
 if __name__ == "__main__":
-    UserIG = InstagramAuth(env.str("IG_USERNAME"), env.str("IG_PASSWORD"), webdriver.Chrome())  # Add Account and Password
+    UserIG = InstagramAuth(env.str("IG_USERNAME"), env.str("IG_PASSWORD"),
+                           webdriver.Chrome())  # Add Account and Password
     UserIG.login()
     Insta_bot = InstagramBot(UserIG.get_driver)
-    user_page = Insta_bot.get_profile_page("https://www.instagram.com/suxrob_gm/")
+    user_page = Insta_bot.get_profile_page("https://www.instagram.com/balabanoova/")
     user_header = HeaderParse(user_page)
-    # src_list = Insta_bot.parse_posts_links()
+    src_list = Insta_bot.parse_posts_links()
     print(user_header.get_basic_info())
-    # print(src_list)
-    # print(len(src_list))
+    print(src_list)
+    print(len(src_list))
     UserIG.close_browser()
     # with open("index.html", "r", encoding="utf-8") as fp:
     #     user_page = fp.read()
