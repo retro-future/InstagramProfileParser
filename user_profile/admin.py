@@ -1,14 +1,15 @@
 from django.contrib import admin
 
-from user_profile.models import Profile, Follower
+from user_profile.models import Profile, Post
 
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "first_name", "last_name")
-    list_display_links = ("user",)
+    list_display = ("id", "username")
+    list_display_links = ("username",)
 
 
-@admin.register(Follower)
-class FollowerAdmin(admin.ModelAdmin):
-    list_display = ("id", "follower", "being_followed")
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ("author", "image_url")
+    list_display_links = ("author",)

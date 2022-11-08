@@ -1,52 +1,32 @@
 from django.contrib.auth.models import User
 from django.db import models
+from django.utils.crypto import get_random_string
+from datetime import datetime
+
+
+def user_posts_directory(instance, filename):
+    date = datetime.utcnow().strftime("%d-%m-%Y")
+    unique_string = get_random_string(10)
+    unique_folder = f"{date}_{unique_string}"
+    return f'profile_pictures/{instance.author.username}/posts/{filename}'
+
+
+def profile_avatars_directory(instance, filename):
+    return f'profile_pictures/{instance.username}/avatars/{filename}'
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    image = models.ImageField(default="default.jpg", upload_to="profile_pics")
-    bio = models.CharField(max_length=150, blank=True)
-    first_name = models.CharField(max_length=30, blank=True)
-    last_name = models.CharField(max_length=30, blank=True)
+    username = models.CharField(max_length=50)
+    avatar = models.ImageField(default="default.jpg", upload_to=profile_avatars_directory)
 
     def __str__(self):
-        return f"{self.user.username} Profile"
-
-
-class Follower(models.Model):
-    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="follower")
-    being_followed = models.ForeignKey(User, on_delete=models.CASCADE, related_name="being_followed")
-    date_followed = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.follower.username, self.being_followed.username} follower -> follows"
+        return f"{self.username}"
 
 
 class Post(models.Model):
-    caption = models.CharField(max_length=2500, blank=True)
-    date_posted = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="user_images")
+    image_url = models.TextField()
+    image = models.ImageField(upload_to=user_posts_directory)
 
     def __str__(self):
-        return self.caption
-
-
-class PostImage(models.Model):
-    post = models.ForeignKey(Post, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to="post_images")
-
-
-class Comments(models.Model):
-    post = models.ForeignKey(Post, related_name="comments", on_delete=models.CASCADE)
-    content = models.CharField(max_length=500, blank=False)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    date_created = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.content
-
-
-class Like(models.Model):
-    liker = models.ForeignKey(User, on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="likes")
-    date_created = models.DateTimeField(auto_now_add=True)
+        return str(self.id)
