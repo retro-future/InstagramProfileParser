@@ -4,15 +4,14 @@ from django.utils.crypto import get_random_string
 from datetime import datetime
 
 
-def user_posts_directory(instance, filename):
+def user_posts_directory(instance, filename) -> str:
     date = datetime.utcnow().strftime("%d-%m-%Y")
-    unique_string = get_random_string(10)
-    unique_folder = f"{date}_{unique_string}"
-    return f'profile_pictures/{instance.author.username}/posts/{filename}'
+    return f'profile_pictures/{instance.author.username}/posts/{date}/{filename}'
 
 
-def profile_avatars_directory(instance, filename):
-    return f'profile_pictures/{instance.username}/avatars/{filename}'
+def profile_avatars_directory(instance, filename) -> str:
+    date = datetime.utcnow().strftime("%d-%m-%Y")
+    return f'profile_pictures/{instance.username}/avatars/{date}/{filename}'
 
 
 class Profile(models.Model):
@@ -30,3 +29,4 @@ class Post(models.Model):
 
     def __str__(self):
         return str(self.id)
+

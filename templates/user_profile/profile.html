@@ -93,14 +93,14 @@
             <div class="profile_info-right">
                 <div class="profile_info__img">
                     <button class="profile_info__img-button">
-                        <img src="../../static/img/default.jpg" alt="avatar" class="profile_info__avatar">
+                        <img src="{{ avatar.url }}" alt="avatar" class="profile_info__avatar">
                     </button>
                 </div>
             </div>
             <div class="profile_info-left">
                 <div class="profile_bio">
                     <div class="profile_settings">
-                        <h1 class="profile_nick">shvhzxd</h1>
+                        <h1 class="profile_nick">{{ username }}</h1>
                         <div class="edit_profile">
                             <button class="edit_profile__button">Edit profile</button>
                             <button class="profile_settings__button">
@@ -196,97 +196,22 @@
 </section>
 <section class="user_posts">
     <div class="container-custom posts_wrapper">
-        <div class="user_posts__wrap">
-            <div class="user_posts__meta">
-                <div class="user_posts__likes">
-                    <div class="user_posts__qlike"></div>
-                    <span>1</span>
-                </div>
-                <div class="user_posts__comment">
-                    <div class="user_posts__qcomment"></div>
-                    <span>22</span>
-                </div>
+        {% for post in posts %}
+            <div class="user_posts__wrap">
+                <img src="{{ post.image.url }}" alt="Photo by {{ username }}" class="img-fluid">
+                <div class="user_posts__meta">
+                    <div class="user_posts__likes">
+                        <div class="user_posts__qlike"></div>
+                        <span>1</span>
+                    </div>
+                    <div class="user_posts__comment">
+                        <div class="user_posts__qcomment"></div>
+                        <span>22</span>
+                    </div>
 
+                </div>
             </div>
-        </div>
-        <div class="user_posts__wrap">
-            <div class="user_posts__meta">
-                <div class="user_posts__likes">
-                    <div class="user_posts__qlike"></div>
-                    <span>1</span>
-                </div>
-                <div class="user_posts__comment">
-                    <div class="user_posts__qcomment"></div>
-                    <span>22</span>
-                </div>
-
-            </div>
-        </div>
-        <div class="user_posts__wrap">
-            <div class="user_posts__meta">
-                <div class="user_posts__likes">
-                    <div class="user_posts__qlike"></div>
-                    <span>1</span>
-                </div>
-                <div class="user_posts__comment">
-                    <div class="user_posts__qcomment"></div>
-                    <span>22</span>
-                </div>
-
-            </div>
-        </div>
-        <div class="user_posts__wrap">
-            <div class="user_posts__meta">
-                <div class="user_posts__likes">
-                    <div class="user_posts__qlike"></div>
-                    <span>1</span>
-                </div>
-                <div class="user_posts__comment">
-                    <div class="user_posts__qcomment"></div>
-                    <span>22</span>
-                </div>
-
-            </div>
-        </div>
-        <div class="user_posts__wrap">
-            <div class="user_posts__meta">
-                <div class="user_posts__likes">
-                    <div class="user_posts__qlike"></div>
-                    <span>1</span>
-                </div>
-                <div class="user_posts__comment">
-                    <div class="user_posts__qcomment"></div>
-                    <span>22</span>
-                </div>
-
-            </div>
-        </div>
-        <div class="user_posts__wrap">
-            <div class="user_posts__meta">
-                <div class="user_posts__likes">
-                    <div class="user_posts__qlike"></div>
-                    <span>1</span>
-                </div>
-                <div class="user_posts__comment">
-                    <div class="user_posts__qcomment"></div>
-                    <span>22</span>
-                </div>
-
-            </div>
-        </div>
-        <div class="user_posts__wrap">
-            <div class="user_posts__meta">
-                <div class="user_posts__likes">
-                    <div class="user_posts__qlike"></div>
-                    <span>1</span>
-                </div>
-                <div class="user_posts__comment">
-                    <div class="user_posts__qcomment"></div>
-                    <span>22</span>
-                </div>
-
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </section>
 
