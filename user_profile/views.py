@@ -17,10 +17,16 @@ class ProfilePage(View):
         return render(request, "user_profile/profile.html", context=context)
 
     def post(self, request: HttpRequest):
-        print(request.POST.get("username"))
-        return redirect("/parser/")
+        username = request.POST.get("username")
+        avatar_url, posts_url = self.profile_service.parse_profile(username)
+        self.profile_service.save_posts_to_db(username, avatar_url, posts_url)
+        return redirect("/done/")
 
 
 class ParserPage(View):
     def get(self, request):
         return render(request, "user_profile/parser.html")
+
+
+def done(request):
+    return render(request, "user_profile/done.html")
