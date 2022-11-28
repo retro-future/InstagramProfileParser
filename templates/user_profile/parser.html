@@ -10,10 +10,11 @@
 <div class="container bg-white">
     <div class="col-md-12">
         <div class="parser_form vh-100 d-flex justify-content-center align-items-center text-center">
-            <form action="." method="post">
+            <form action="/profiles/" method="post">
+                {% csrf_token %}
                 <div class="mb-3">
-                    <label for="usernameInput" class="form-label">Username</label>
-                    <input type="text" class="form-control" id="usernameInput" aria-describedby="usernameHelp">
+                    <label for="usernameInput" class="form-label h1 mb-3">Username</label>
+                    <input name="username" type="text" class="form-control" id="usernameInput" aria-describedby="usernameHelp">
                     <div id="usernameHelp" class="form-text">Enter a username you want to parse</div>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Parse</button>

@@ -31,8 +31,7 @@ class PostsParser:
                                                     "flex-direction: column; padding-bottom: 0px; padding-top: "
                                                     "0px;')]")
         while True:
-            img_tag = posts_row_block.find_elements(By.XPATH, "//img[contains(@alt, 'Photo by') or contains(@style, "
-                                                              "'object-fit: cover;')]")
+            img_tag = posts_row_block.find_elements(By.XPATH, ".//img")
             previous_height = self._driver.execute_script("return document.body.scrollHeight")
             img_src_list.extend(self._get_img_src(img_tag))
             self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")

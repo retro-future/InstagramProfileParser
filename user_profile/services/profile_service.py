@@ -52,3 +52,6 @@ class ProfileService:
         profile = Profile.objects.get(username=username)
         posts = profile.user_images.all()
         return (profile, posts)
+
+    def parse_profile(self, username: str):
+        pass

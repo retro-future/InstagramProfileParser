@@ -14,12 +14,12 @@ def main():
     UserIG = InstagramAuth(webdriver.Chrome())
     UserIG.login(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
     Insta_bot = PostsParser(UserIG.driver)
-    user_page = Insta_bot.get_profile_page("https://www.instagram.com/java__110/")
+    user_page = Insta_bot.get_profile_page("https://www.instagram.com/yourock_666/")
     user_header = HeaderParse(user_page)
     srcs = Insta_bot.parse_posts_links()
-    instantiate_profile_service = ProfileService()
-    instantiate_profile_service.save_posts_to_db(username=user_header.parse_username(),
-                                                 avatar_url=user_header.parse_avatar_url(), url_list=srcs)
+    # instantiate_profile_service = ProfileService()
+    # instantiate_profile_service.save_posts_to_db(username=user_header.parse_username(),
+    #                                              avatar_url=user_header.parse_avatar_url(), url_list=srcs)
     print(user_header.get_basic_info())
     print(srcs)
     print(len(srcs))
