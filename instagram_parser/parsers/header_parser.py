@@ -5,8 +5,8 @@ from lxml import etree
 class BaseParser:
     def __init__(self, profile_page: str):
         self.profile_page = profile_page
-        self.soup = BeautifulSoup(self.profile_page, "lxml")
-        self.dom = etree.HTML(str(self.soup))
+        self.soup = BeautifulSoup(profile_page, "lxml")
+        self.dom = etree.HTML(profile_page)
 
 
 class HeaderParse(BaseParser):
@@ -24,7 +24,7 @@ class HeaderParse(BaseParser):
         return username
 
     def parse_followers_posts(self, text: str) -> str:
-        element = self.dom.xpath(f"//div[contains(text(), \'{text}\')]/span/text()")
+        element = self.dom.xpath(f"//div[contains(text(), \'{text}\')]/span/span/text()")
         if not element:
             return ""
         return element.pop()

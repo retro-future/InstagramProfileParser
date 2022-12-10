@@ -24,6 +24,10 @@ class InstagramAuth:
     def close_browser(self) -> None:
         self._driver.close()
 
+    @property
+    def driver(self) -> webdriver.Chrome:
+        return self._driver
+
     def _cookies_exists(self) -> bool:
         """
         Checks cookies pickle file
@@ -35,9 +39,9 @@ class InstagramAuth:
         """
         if not os.path.exists("cookies.pkl"):
             return False
+        # check for the cookies expiry_time, if cookies are expired then return False
+        # there might be dicts without "expiry" key, so there's an additional check
         with open("cookies.pkl", "rb") as f:
-            # check for the cookies expiry_time, if cookies are expired then return False
-            # there might be dicts without "expiry" key, so there's an additional check
             cookies = pickle.load(f)
         min_expiry_time = min([cookie.get("expiry") for cookie in cookies if cookie.get("expiry")])
         formatted_time = datetime.fromtimestamp(min_expiry_time)
@@ -72,6 +76,15 @@ class InstagramAuth:
         else:
             pickle.dump(self._driver.get_cookies(), open("cookies.pkl", "wb"))
 
-    @property
-    def driver(self) -> webdriver.Chrome:
-        return self._driver
+    def get_profile_page(self, profile_page_url: str) -> str:
+        self._driver.get(profile_page_url)
+        try:
+            WebDriverWait(self._driver, 10).until(ec.all_of(
+                ec.presence_of_element_located((By.XPATH, "//div[contains(text(), 'followers')]")),
+                ec.presence_of_element_located((By.XPATH, "//div[contains(@style,'position: relative; display: flex; "
+                                                          "flex-direction: column; padding-bottom: 0px; padding-top: "
+                                                          "0px;')]"))
+            ))
+        except TimeoutException:
+            logger.warning("Cannot load the profile page")
+        return self._driver.page_source

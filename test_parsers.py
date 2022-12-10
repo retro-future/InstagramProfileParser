@@ -14,7 +14,7 @@ def main():
     UserIG = InstagramAuth(webdriver.Chrome())
     UserIG.login(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
     Insta_bot = PostsParser(UserIG.driver)
-    user_page = Insta_bot.get_profile_page("https://www.instagram.com/yourock_666/")
+    user_page = UserIG.get_profile_page("https://www.instagram.com/java__110/")
     user_header = HeaderParse(user_page)
     srcs = Insta_bot.parse_posts_links()
     # instantiate_profile_service = ProfileService()
