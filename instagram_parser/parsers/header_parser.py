@@ -1,5 +1,13 @@
+from dataclasses import dataclass
+from django.utils.crypto import get_random_string
 from bs4 import BeautifulSoup
 from lxml import etree
+
+
+@dataclass
+class Profile:
+    username: str
+    posts_count: str
 
 
 class BaseParser:
@@ -21,6 +29,8 @@ class HeaderParse(BaseParser):
         user_name_1 = self.dom.xpath("//header//*[self::h1 or self::h2]/text()")
         user_name_2 = self.soup.find(class_="_aacl _aacs _aact _aacx _aada")
         username = user_name_1.pop() if user_name_1 else user_name_2.text
+        if not username:
+            username = f"test-{get_random_string(5)}"
         return username
 
     def parse_followers_posts(self, text: str) -> str:

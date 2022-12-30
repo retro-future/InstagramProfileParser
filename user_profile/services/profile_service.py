@@ -1,3 +1,4 @@
+from collections import namedtuple
 from io import BytesIO
 from typing import List
 
@@ -45,16 +46,19 @@ class ProfileService:
         return instance
 
     @staticmethod
-    def _create_posts(profile_instance: Profile, url_list: List[str]) -> None:
+    def _create_posts(profile_instance: Profile, url_list: List[str]) -> List[Post]:
+        posts: List[Post] = []
         if url_list:
             for index, url in enumerate(url_list):
                 filename = f"{index}_{get_random_string(30)}.jpg"
                 image = ImageFile(BytesIO(download_image(url)), name=filename)
-                Post.objects.create(author=profile_instance, image_url=url, image=image)
+                posts.append(Post(author=profile_instance, image_url=url, image=image))
+        return posts
 
     def save_posts_to_db(self, username: str, avatar_url: str, url_list: List[str]) -> Profile:
         profile_instance = self._create_profile_instance(username, avatar_url)
-        self._create_posts(profile_instance=profile_instance, url_list=url_list)
+        posts = self._create_posts(profile_instance=profile_instance, url_list=url_list)
+        Post.objects.bulk_create(posts)
         logger.info("Created")
         return profile_instance
 
@@ -66,11 +70,11 @@ class ProfileService:
     def parse_profile(self, username: str):
         UserIG = InstagramAuth(webdriver.Chrome())
         UserIG.login(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
-        Posts = PostsParser(UserIG.driver)
         user_page = UserIG.get_profile_page(f"https://www.instagram.com/{username}/")
+        Posts = PostsParser(UserIG.driver)
+        srcs = Posts.parse_posts_links()
         user_header = HeaderParse(user_page)
         avatar_url = user_header.parse_avatar_url()
-        srcs = Posts.parse_posts_links()
         UserIG.close_browser()
         print(user_header.get_basic_info())
         print(srcs)

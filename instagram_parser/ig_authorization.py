@@ -43,7 +43,7 @@ class InstagramAuth:
         # there might be dicts without "expiry" key, so there's an additional check
         with open("cookies.pkl", "rb") as f:
             cookies = pickle.load(f)
-        min_expiry_time = min([cookie.get("expiry") for cookie in cookies if cookie.get("expiry")])
+        min_expiry_time = min([cookie["expiry"] for cookie in cookies if cookie.get("expiry")])
         formatted_time = datetime.fromtimestamp(min_expiry_time)
         if formatted_time < datetime.now():
             return False
