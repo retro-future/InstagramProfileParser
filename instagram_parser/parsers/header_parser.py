@@ -7,7 +7,10 @@ from lxml import etree
 @dataclass
 class Profile:
     username: str
-    posts_count: str
+    avatar_url: str
+    posts_count: int
+    followers_count: str
+    followings_count: str
 
 
 class BaseParser:
@@ -39,11 +42,10 @@ class HeaderParse(BaseParser):
             return ""
         return element.pop()
 
-    def get_basic_info(self) -> str:
-        user_avatar_url = self.parse_avatar_url()
+    def get_basic_info(self) -> Profile:
         user_name = self.parse_username()
-        user_posts_count = self.parse_followers_posts("posts")
+        user_avatar_url = self.parse_avatar_url()
+        user_posts_count = int(self.parse_followers_posts("posts"))
         user_followers_count = self.parse_followers_posts("followers")
         user_following_count = self.parse_followers_posts("following")
-        return f"User Name: {user_name}\nAvatar Url: {user_avatar_url}\nPosts: {user_posts_count}\n" \
-               f"Followers: {user_followers_count}\nFollowing: {user_following_count}"
+        return Profile(user_name, user_avatar_url, user_posts_count, user_followers_count, user_following_count)

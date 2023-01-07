@@ -1,3 +1,5 @@
+from typing import Callable
+
 from loguru import logger
 
 from selenium import webdriver
@@ -11,9 +13,10 @@ from instagram_parser.custom_ec import document_height_is_not_equal
 
 
 class PostsParser:
-    def __init__(self, driver: webdriver.Chrome):
+    def __init__(self, driver: webdriver.Chrome, progress_updater: Callable = None):
         self._driver = driver
         self.img_srcs = list()
+        self.progress_updater = progress_updater
 
     @staticmethod
     def __get_img_src(element_list: list) -> list:
@@ -44,10 +47,15 @@ class PostsParser:
             rows = posts_block.find_elements(By.XPATH, "./div[position()<=4]")
             self.img_srcs.extend(self.__get_img_src(rows))
             end_of_page = self.scrollDownToEnd()
+            if self.progress_updater:
+                current_progress = len(dict.fromkeys(self.img_srcs))
+                self.progress_updater(current_progress)
         else:
             self.img_srcs.extend(self.__get_img_src(posts_block.find_elements(By.XPATH, "./div")))
+            current_progress = len(dict.fromkeys(self.img_srcs))
+            self.progress_updater(current_progress)
 
-    def parse_posts_links(self) -> list:
+    def parse_posts_links(self, progress_updater: Callable = None) -> list:
         """Have to convert 'img_srcs' into dict and vice versa
            in order to preserve posts order and remove the same items
         """

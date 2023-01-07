@@ -26,7 +26,7 @@ class ProfilePage(View):
         print(f'Celery Task ID: {task_id}')
         # avatar_url, posts_url = self.profile_service.parse_profile(username)
         # self.profile_service.save_posts_to_db(username, avatar_url, posts_url)
-        return redirect("/done/")
+        return render(request, "user_profile/done.html", {"task_id": task_id})
 
 
 class ParserPage(View):

@@ -1,4 +1,3 @@
-from collections import namedtuple
 from io import BytesIO
 from typing import List
 
@@ -20,9 +19,6 @@ except RuntimeError:
 from user_profile.models import Profile, Post
 from django.core.files.images import ImageFile
 
-env = Env()
-env.read_env()
-
 
 class CannotLoadImage(Exception):
     pass
@@ -42,7 +38,6 @@ class ProfileService:
         instance, _ = Profile.objects.get_or_create(username=username)
         avatar = ImageFile(BytesIO(download_image(avatar_url)), name="avatar.jpg")
         instance.avatar = avatar
-        instance.save()
         return instance
 
     @staticmethod
@@ -58,6 +53,7 @@ class ProfileService:
     def save_posts_to_db(self, username: str, avatar_url: str, url_list: List[str]) -> Profile:
         profile_instance = self._create_profile_instance(username, avatar_url)
         posts = self._create_posts(profile_instance=profile_instance, url_list=url_list)
+        profile_instance.save()
         Post.objects.bulk_create(posts)
         logger.info("Created")
         return profile_instance
@@ -67,16 +63,16 @@ class ProfileService:
         posts = profile.user_images.all()
         return profile, posts
 
-    def parse_profile(self, username: str):
-        UserIG = InstagramAuth(webdriver.Chrome())
-        UserIG.login(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
-        user_page = UserIG.get_profile_page(f"https://www.instagram.com/{username}/")
-        Posts = PostsParser(UserIG.driver)
-        srcs = Posts.parse_posts_links()
-        user_header = HeaderParse(user_page)
-        avatar_url = user_header.parse_avatar_url()
-        UserIG.close_browser()
-        print(user_header.get_basic_info())
-        print(srcs)
-        print(len(srcs))
-        return avatar_url, srcs
+    # def parse_profile(self, username: str):
+    #     UserIG = InstagramAuth(webdriver.Chrome())
+    #     UserIG.login(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
+    #     user_page = UserIG.get_profile_page(f"https://www.instagram.com/{username}/")
+    #     user_header = HeaderParse(user_page)
+    #     avatar_url = user_header.parse_avatar_url()
+    #     Posts = PostsParser(UserIG.driver)
+    #     srcs = Posts.parse_posts_links()
+    #     UserIG.close_browser()
+    #     print(user_header.get_basic_info())
+    #     print(srcs)
+    #     print(len(srcs))
+    #     return avatar_url, srcs
