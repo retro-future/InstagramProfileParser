@@ -1,5 +1,3 @@
-import functools
-import time
 from typing import Callable
 
 from environs import Env
@@ -18,7 +16,9 @@ env.read_env()
 
 @shared_task(bind=True)
 def processParsing(self, username: str) -> None:
+    print("*" * 25)
     print(type(self))
+    print("*"*25)
     profile_service = ProfileService()
     UserIG = InstagramAuth(webdriver.Chrome())
     UserIG.login(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
@@ -31,7 +31,7 @@ def processParsing(self, username: str) -> None:
     profile_service.save_posts_to_db(username, basic_info.avatar_url, srcs)
 
 
-def update_progress(task_instance, total: int) -> Callable:
+def update_progress(task_instance, total: int) -> Callable[[int], None]:
     progress_recorder = ProgressRecorder(task_instance)
     total = total
 

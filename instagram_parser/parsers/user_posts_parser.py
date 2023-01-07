@@ -13,7 +13,7 @@ from instagram_parser.custom_ec import document_height_is_not_equal
 
 
 class PostsParser:
-    def __init__(self, driver: webdriver.Chrome, progress_updater: Callable = None):
+    def __init__(self, driver: webdriver.Chrome, progress_updater: Callable[[int], None] = None):
         self._driver = driver
         self.img_srcs = list()
         self.progress_updater = progress_updater

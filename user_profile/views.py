@@ -20,12 +20,8 @@ class ProfilePage(View):
     def post(self, request: HttpRequest):
         username = request.POST.get("username")
         parse_task = processParsing.delay(username)
-        # Get ID
         task_id = parse_task.task_id
-        # Print Task ID
         print(f'Celery Task ID: {task_id}')
-        # avatar_url, posts_url = self.profile_service.parse_profile(username)
-        # self.profile_service.save_posts_to_db(username, avatar_url, posts_url)
         return render(request, "user_profile/done.html", {"task_id": task_id})
 
 
