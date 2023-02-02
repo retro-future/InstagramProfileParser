@@ -2,7 +2,7 @@ import django
 from django.conf import settings
 from environs import Env
 
-from insta_clone.settings import BASE_DIR, DATABASE, PGUSER, PGPASSWORD, DB_Ip
+from insta_clone.settings import BASE_DIR, DATABASE, PGUSER, PGPASSWORD, DB_IP
 
 settings.configure(
     DATABASES={
@@ -17,7 +17,7 @@ settings.configure(
 
             'PASSWORD': PGPASSWORD,
 
-            'HOST': DB_Ip,
+            'HOST': DB_IP,
 
             'PORT': 5432,
 

@@ -23,10 +23,10 @@ class BaseParser:
 class HeaderParse(BaseParser):
 
     def parse_avatar_url(self) -> str:
-        user_avatar = self.dom.xpath("//header//img/@src")
-        if not user_avatar:
+        avatar_url = self.dom.xpath("//header//img/@src")
+        if not avatar_url:
             return ""
-        return user_avatar.pop()
+        return avatar_url.pop()
 
     def parse_username(self) -> str:
         user_name_1 = self.dom.xpath("//header//*[self::h1 or self::h2]/text()")
@@ -36,7 +36,7 @@ class HeaderParse(BaseParser):
             username = f"test-{get_random_string(5)}"
         return username
 
-    def parse_followers_posts(self, text: str) -> str:
+    def parse_count_of(self, text: str) -> str:
         element = self.dom.xpath(f"//div[contains(text(), \'{text}\')]/span/span/text()")
         if not element:
             return ""
@@ -44,8 +44,8 @@ class HeaderParse(BaseParser):
 
     def get_basic_info(self) -> Profile:
         user_name = self.parse_username()
-        user_avatar_url = self.parse_avatar_url()
-        user_posts_count = int(self.parse_followers_posts("posts"))
-        user_followers_count = self.parse_followers_posts("followers")
-        user_following_count = self.parse_followers_posts("following")
-        return Profile(user_name, user_avatar_url, user_posts_count, user_followers_count, user_following_count)
+        avatar_url = self.parse_avatar_url()
+        posts_count = int(self.parse_count_of("posts"))
+        followers_count = self.parse_count_of("followers")
+        following_count = self.parse_count_of("following")
+        return Profile(user_name, avatar_url, posts_count, followers_count, following_count)

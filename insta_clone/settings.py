@@ -22,7 +22,7 @@ env.read_env()
 PGUSER = env.str("POSTGRES_USER")
 PGPASSWORD = env.str("POSTGRES_PASSWORD")
 DATABASE = env.str("POSTGRES_DB")
-DB_Ip = env.str("DB_IP")
+DB_IP = env.str("DB_IP")
 S_KEY = env.str("DJANGO_SECRET")
 
 # Quick-start development settings - unsuitable for production
@@ -95,7 +95,7 @@ DATABASES = {
 
         'PASSWORD': PGPASSWORD,
 
-        'HOST': DB_Ip,
+        'HOST': DB_IP,
 
         'PORT': 5432,
 

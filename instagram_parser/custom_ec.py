@@ -6,7 +6,7 @@ from selenium import webdriver
 
 # Custom ExpectedConditions here
 
-def document_height_is_not_equal(previous_height: int):
+def page_height_is_not_equal(previous_height: int):
     def _predicate(driver: webdriver.Chrome):
         height = driver.execute_script("return document.body.scrollHeight")
         if height != previous_height:

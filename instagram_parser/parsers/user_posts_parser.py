@@ -9,7 +9,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
 
-from instagram_parser.custom_ec import document_height_is_not_equal
+from instagram_parser.custom_ec import page_height_is_not_equal
 
 
 class PostsParser:
@@ -30,7 +30,7 @@ class PostsParser:
         previous_height = self._driver.execute_script("return document.body.scrollHeight")
         self._driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         try:
-            WebDriverWait(self._driver, 10).until(document_height_is_not_equal(previous_height))
+            WebDriverWait(self._driver, 2).until(page_height_is_not_equal(previous_height))
         except TimeoutException:
             logger.info("End of the profile page")
             return True
@@ -55,7 +55,7 @@ class PostsParser:
             current_progress = len(dict.fromkeys(self.img_srcs))
             self.progress_updater(current_progress)
 
-    def parse_posts_links(self, progress_updater: Callable = None) -> list:
+    def parse_posts_links(self) -> list:
         """Have to convert 'img_srcs' into dict and vice versa
            in order to preserve posts order and remove the same items
         """
