@@ -27,6 +27,10 @@ def download_image(url: str) -> bytes:
 
 class ProfileService:
 
+    def __init__(self, progress_updater: Callable[[int], None] = None):
+        self.progress_updater = progress_updater
+        self.posts: List[Post] = list()
+
     @staticmethod
     def _create_profile_instance(username: str, avatar_url: str) -> Profile:
         instance, _ = Profile.objects.get_or_create(username=username)
@@ -34,26 +38,19 @@ class ProfileService:
         instance.avatar = avatar
         return instance
 
-    @staticmethod
-    def _create_posts(profile_instance: Profile, url_list: List[str], progress_function: Callable) -> List[Post]:
-        posts: List[Post] = []
-        if url_list:
-            for index, url in enumerate(url_list):
-                filename = f"{index}_{get_random_string(30)}.jpg"
-                image = ImageFile(BytesIO(download_image(url)), name=filename)
-                progress_function(index)
-                posts.append(Post(author=profile_instance, image_url=url, image=image))
-        return posts
+    def _create_posts(self, profile_instance: Profile, url_list: List[str]) -> None:
+        for index, url in enumerate(url_list):
+            filename = f"{index}_{get_random_string(30)}.jpg"
+            image = ImageFile(BytesIO(download_image(url)), name=filename)
+            self.posts.append(Post(author=profile_instance, image_url=url, image=image))
+            self.progress_updater(index)
 
-    def save_posts_to_db(self, username: str, avatar_url: str, url_list: List[str],
-                         progress_function: Callable) -> Profile:
+    def save_to_db(self, username: str, avatar_url: str, url_list: List[str]) -> None:
         profile_instance = self._create_profile_instance(username, avatar_url)
-        posts = self._create_posts(profile_instance=profile_instance, url_list=url_list,
-                                   progress_function=progress_function)
+        self._create_posts(profile_instance=profile_instance, url_list=url_list)
         profile_instance.save()
-        Post.objects.bulk_create(posts)
+        Post.objects.bulk_create(self.posts)
         logger.info("Created")
-        return profile_instance
 
     def get_profile_and_posts(self, username: str) -> tuple:
         profile = Profile.objects.prefetch_related("user_posts").get(username=username)

@@ -21,6 +21,13 @@ class BaseParser:
 
 
 class HeaderParse(BaseParser):
+    def get_basic_info(self) -> Profile:
+        user_name = self.parse_username()
+        avatar_url = self.parse_avatar_url()
+        posts_count = int(self.parse_count_of("posts"))
+        followers_count = self.parse_count_of("followers")
+        following_count = self.parse_count_of("following")
+        return Profile(user_name, avatar_url, posts_count, followers_count, following_count)
 
     def parse_avatar_url(self) -> str:
         avatar_url = self.dom.xpath("//header//img/@src")
@@ -42,10 +49,4 @@ class HeaderParse(BaseParser):
             return ""
         return element.pop()
 
-    def get_basic_info(self) -> Profile:
-        user_name = self.parse_username()
-        avatar_url = self.parse_avatar_url()
-        posts_count = int(self.parse_count_of("posts"))
-        followers_count = self.parse_count_of("followers")
-        following_count = self.parse_count_of("following")
-        return Profile(user_name, avatar_url, posts_count, followers_count, following_count)
+

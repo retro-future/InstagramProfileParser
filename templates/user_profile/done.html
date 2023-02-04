@@ -6,10 +6,17 @@
             <div class="parser_form vh-100 d-flex flex-column justify-content-center align-items-center text-center">
                 <h1 style="display: block">User page is being parsed!</h1>
                 <div class='progress-wrapper w-100'>
-                    <div id='progress-bar' class='progress-bar' style="background-color: #68a9ef; width: 0%;">&nbsp;
+                    <div id='progress-bar-posts' class='progress-bar' style="background-color: #68a9ef; width: 0%;">
+                        &nbsp;
                     </div>
                 </div>
-                <div id="progress-bar-message">Waiting for progress to start...</div>
+                <div id="progress-bar-posts-message">Waiting for progress to start...</div>
+                <div class='progress-wrapper w-100'>
+                    <div id='progress-bar-download' class='progress-bar' style="background-color: #68a9ef; width: 0%;">
+                        &nbsp;
+                    </div>
+                </div>
+                <div id="progress-bar-download-message">Waiting for progress to start...</div>
                 <div id="celery-result">
                 </div>
 
@@ -20,10 +27,20 @@
     </div>
     <script src="{% static 'celery_progress/celery_progress.js' %}"></script>
     <script>
-        {% if task_id %}
+        {% if parse_task_id %}
             document.addEventListener("DOMContentLoaded", function () {
-                var progressUrl = "{% url 'celery_progress:task_status' task_id %}";
-                CeleryProgressBar.initProgressBar(progressUrl);
+                var progressUrl = "{% url 'celery_progress:task_status' parse_task_id %}";
+                CeleryProgressBar.initProgressBar(progressUrl, {
+                    progressBarId: "progress-bar-posts",
+                    progressBarMessageId: "progress-bar-posts-message"
+                });
+            });
+            document.addEventListener("DOMContentLoaded", function () {
+                var progressUrl = "{% url 'celery_progress:task_status' download_task_id %}";
+                CeleryProgressBar.initProgressBar(progressUrl, {
+                    progressBarId: "progress-bar-download",
+                    progressBarMessageId: "progress-bar-download-message"
+                });
             });
         {% endif %}
     </script>

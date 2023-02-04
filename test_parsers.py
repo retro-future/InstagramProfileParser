@@ -16,7 +16,7 @@ def main():
     Insta_bot = PostsParser(UserIG.driver)
     user_page = UserIG.get_profile_page("https://www.instagram.com/mulcciberlife/")
     user_header = HeaderParse(user_page)
-    srcs = Insta_bot.parse_posts_links()
+    srcs = Insta_bot.parse_posts()
     # instantiate_profile_service = ProfileService()
     # instantiate_profile_service.save_posts_to_db(username=user_header.parse_username(),
     #                                              avatar_url=user_header.parse_avatar_url(), url_list=srcs)
