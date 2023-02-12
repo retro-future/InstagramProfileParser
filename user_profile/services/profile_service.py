@@ -1,6 +1,9 @@
+import asyncio
 from io import BytesIO
-from typing import List, Callable
+import time
+from typing import List, Callable, Dict
 
+import aiohttp
 import requests
 from django.utils.crypto import get_random_string
 from loguru import logger
@@ -38,16 +41,16 @@ class ProfileService:
         instance.avatar = avatar
         return instance
 
-    def _create_posts(self, profile_instance: Profile, url_list: List[str]) -> None:
-        for index, url in enumerate(url_list):
+    def _create_posts(self, profile_instance: Profile, images: Dict[str, bytes]) -> None:
+        for index, (url, image_bytes) in enumerate(images.items()):
             filename = f"{index}_{get_random_string(30)}.jpg"
-            image = ImageFile(BytesIO(download_image(url)), name=filename)
+            image = ImageFile(BytesIO(image_bytes), name=filename)
             self.posts.append(Post(author=profile_instance, image_url=url, image=image))
             self.progress_updater(index)
 
-    def save_to_db(self, username: str, avatar_url: str, url_list: List[str]) -> None:
+    def save_to_db(self, username: str, avatar_url: str, images: Dict[str, bytes]) -> None:
         profile_instance = self._create_profile_instance(username, avatar_url)
-        self._create_posts(profile_instance=profile_instance, url_list=url_list)
+        self._create_posts(profile_instance=profile_instance, images=images)
         profile_instance.save()
         Post.objects.bulk_create(self.posts)
         logger.info("Created")
@@ -56,3 +59,25 @@ class ProfileService:
         profile = Profile.objects.prefetch_related("user_posts").get(username=username)
         posts = profile.user_posts.all()
         return profile, posts
+
+
+class AsyncDownloader:
+    def __init__(self, semaphore_init: int = 15):
+        self.downloaded_images: Dict[str, bytes] = dict()
+        self.semaphore = asyncio.Semaphore(semaphore_init)
+
+    async def async_download_image(self, image_url: str) -> None:
+        async with self.semaphore:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(image_url) as res:
+                    self.downloaded_images[image_url] = await res.read()
+
+    async def async_download_images(self, image_urls: List[str]) -> Dict[str, bytes]:
+        tasks = [asyncio.create_task(self.async_download_image(url)) for url in image_urls]
+        s = time.perf_counter()
+        await asyncio.gather(*tasks)
+        elapsed = time.perf_counter() - s
+        print("*" * 50)
+        print(f"{__file__} executed in {elapsed:0.2f} seconds.")
+        print("*" * 50)
+        return self.downloaded_images

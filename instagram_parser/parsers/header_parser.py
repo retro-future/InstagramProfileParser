@@ -1,4 +1,6 @@
+import re
 from dataclasses import dataclass
+
 from django.utils.crypto import get_random_string
 from bs4 import BeautifulSoup
 from lxml import etree
@@ -24,7 +26,7 @@ class HeaderParse(BaseParser):
     def get_basic_info(self) -> Profile:
         user_name = self.parse_username()
         avatar_url = self.parse_avatar_url()
-        posts_count = int(self.parse_count_of("posts"))
+        posts_count = self.parse_count_of_posts()
         followers_count = self.parse_count_of("followers")
         following_count = self.parse_count_of("following")
         return Profile(user_name, avatar_url, posts_count, followers_count, following_count)
@@ -49,4 +51,9 @@ class HeaderParse(BaseParser):
             return ""
         return element.pop()
 
-
+    def parse_count_of_posts(self) -> int:
+        element = self.dom.xpath("//div[contains(text(), 'posts')]/span/span/text()")
+        posts_count = element.pop()
+        n = re.findall(r'\d', posts_count)
+        number = "".join(n)
+        return int(number)

@@ -1,51 +1,56 @@
+import asyncio
 import dataclasses
 from dataclasses import dataclass
 from functools import partial
+from typing import Iterable
 
 from environs import Env
 from celery import shared_task
 from celery_progress.backend import ProgressRecorder
-from selenium import webdriver
 
-from instagram_parser.ig_authorization import InstagramAuth
+from insta_clone import env
+from instagram_parser.instagram_auth import InstagramAuth
 from instagram_parser.parsers.header_parser import HeaderParse
 from instagram_parser.parsers.user_posts_parser import PostsParser
-from user_profile.services.profile_service import ProfileService
-
-env = Env()
-env.read_env()
+from user_profile.services.profile_service import ProfileService, AsyncDownloader
 
 
 @dataclass
 class ParsedData:
     username: str
     avatar_url: str
-    posts_urls: list
+    posts_urls: Iterable[str]
 
 
 @shared_task(bind=True)
 def processParsing(self, username: str):
-    UserIG = InstagramAuth(webdriver.Chrome())
-    UserIG.login(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
-    user_page = UserIG.get_profile_page(f"https://www.instagram.com/{username}/")
+    Instagram_bot = InstagramAuth(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
+    Instagram_bot.login()
+    user_page = Instagram_bot.get_profile_page(f"https://www.instagram.com/{username}/")
     user_header = HeaderParse(user_page)
     basic_info = user_header.get_basic_info()
-    Posts = PostsParser(UserIG.driver, partial(update_progress_v2,
-                                               total=basic_info.posts_count,
-                                               task_instance=self,
-                                               description="Parsing posts"))
+    Posts = PostsParser(Instagram_bot.driver, partial(update_progress_v2,
+                                                      total=basic_info.posts_count,
+                                                      task_instance=self,
+                                                      description="Parsing posts"))
     urls = Posts.parse_posts()
-    UserIG.close_browser()
+    Instagram_bot.close_browser()
     return dataclasses.asdict(ParsedData(username=username, avatar_url=basic_info.avatar_url, posts_urls=urls))
 
 
 @shared_task(bind=True)
 def process_save_to_db(self, data: dict) -> None:
+    username = data.get("username")
+    avatar_url = data.get("avatar_url")
+    posts_urls = data.get("posts_urls")
+    downloader = AsyncDownloader()
+    loop = asyncio.get_event_loop()
+    result = loop.run_until_complete(downloader.async_download_images(posts_urls))
     profile_service = ProfileService(partial(update_progress_v2,
-                                             total=len(data.get("posts_urls")),
+                                             total=len(posts_urls),
                                              task_instance=self,
                                              description="Downloading posts"))
-    profile_service.save_to_db(*data.values())
+    profile_service.save_to_db(username, avatar_url, result)
 
 
 def update_progress_v2(current: int, total: int, task_instance, description: str = "") -> None:

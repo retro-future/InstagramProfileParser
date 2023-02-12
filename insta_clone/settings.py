@@ -13,11 +13,11 @@ import os
 from pathlib import Path
 from environs import Env
 
+from insta_clone import env
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env = Env()
-env.read_env()
 
 PGUSER = env.str("POSTGRES_USER")
 PGPASSWORD = env.str("POSTGRES_PASSWORD")

@@ -2,7 +2,7 @@ from environs import Env
 from selenium import webdriver
 
 from instagram_parser.parsers.header_parser import HeaderParse
-from instagram_parser.ig_authorization import InstagramAuth
+from instagram_parser.instagram_auth import InstagramAuth
 from instagram_parser.parsers.user_posts_parser import PostsParser
 from user_profile.services.profile_service import ProfileService
 
@@ -11,8 +11,8 @@ env.read_env()
 
 
 def main():
-    UserIG = InstagramAuth(webdriver.Chrome())
-    UserIG.login(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
+    UserIG = InstagramAuth(env.str("IG_USERNAME"), env.str("IG_PASSWORD"))
+    UserIG.login()
     Insta_bot = PostsParser(UserIG.driver)
     user_page = UserIG.get_profile_page("https://www.instagram.com/mulcciberlife/")
     user_header = HeaderParse(user_page)
@@ -24,7 +24,6 @@ def main():
     print(srcs)
     print(len(srcs))
     UserIG.close_browser()
-
 
 if __name__ == "__main__":
     main()
