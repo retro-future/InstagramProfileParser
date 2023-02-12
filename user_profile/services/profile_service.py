@@ -8,11 +8,6 @@ import requests
 from django.utils.crypto import get_random_string
 from loguru import logger
 
-try:
-    from instagram_parser import setup_django_orm  # should be before models import
-except RuntimeError:
-    pass
-
 from user_profile.models import Profile, Post
 from django.core.files.images import ImageFile
 

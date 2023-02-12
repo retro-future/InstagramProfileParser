@@ -7,6 +7,32 @@
 ```
 
 
-* #### Write your credentials to the environment
-* #### Create and run migrations 
-* #### Create superuser for admin panel
+* #### Rename .env.dist to .env
+
+```bash
+  cd InstagramProfileParser 
+```
+* #### Activate Virtual environment
+* #### Generate new django secret key
+```bash
+  python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+ 
+```
+* #### Write your credentials to the .env 
+```bash
+  pip install -r requirements.txt 
+```
+* #### make and run migrations
+```bash
+  python manage.py makemigrations
+  python manage.py migrate
+```
+* #### Install Redis and run it on port 6379
+* #### On terminal Run Celery with following commands
+```bash
+celery -A insta_clone worker -l info --without-gossip --without-mingle --without-heartbeat -Ofair --pool=solo
+```
+* #### In Browser open localhost:8000/parser
+* #### Enter instagram profile username, click parse button and parsing should start
+
+* Don't forget to update chromedriver.exe and place it in root directory
