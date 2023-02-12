@@ -34,5 +34,6 @@ celery -A insta_clone worker -l info --without-gossip --without-mingle --without
 ```
 * #### In Browser open localhost:8000/parser
 * #### Enter instagram profile username, click parse button and parsing should start
+* #### All parsed imaged saved in media/profile_pictures folder
 
 * Don't forget to update chromedriver.exe and place it in root directory
