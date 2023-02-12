@@ -12,6 +12,9 @@
 ```bash
   cd InstagramProfileParser 
 ```
+```bash
+  pip install -r requirements.txt 
+```
 * #### Activate Virtual environment
 * #### Generate new django secret key
 ```bash
@@ -19,9 +22,7 @@
  
 ```
 * #### Write your credentials to the .env 
-```bash
-  pip install -r requirements.txt 
-```
+
 * #### make and run migrations
 ```bash
   python manage.py makemigrations
@@ -32,6 +33,7 @@
 ```bash
 celery -A insta_clone worker -l info --without-gossip --without-mingle --without-heartbeat -Ofair --pool=solo
 ```
+* #### Run django server
 * #### In Browser open localhost:8000/parser
 * #### Enter instagram profile username, click parse button and parsing should start
 * #### All parsed imaged saved in media/profile_pictures folder
